@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>NCHRP 17-142 – Task 1 Literature Review Dashboard (Prototype)</title>
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color-scheme: light;
+      --bg: #f4f5f7;
+      --card-bg: #ffffff;
+      --card-border: #e0e4ea;
+      --accent: #004b9b;
+      --accent-soft: #e1ecff;
+      --text-main: #111827;
+      --text-subtle: #4b5563;
+      --shadow-soft: 0 12px 28px rgba(15, 23, 42, 0.08);
+      --radius-xl: 18px;
+      --radius-md: 10px;
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--text-main); font-size:1.05rem; }
+    .app-shell { max-width:1600px; margin:0 auto; padding:1.5rem 1.25rem 2.5rem; }
+    header { margin-bottom:1rem; }
+    h1 { font-size:1.6rem; margin:0 0 .35rem 0; letter-spacing:.03em; }
+    h2 { font-size:1.25rem; margin:0 0 .6rem 0; }
+    h3 { font-size:1.1rem; margin:0 0 .4rem 0; }
+
+    .subtitle {
+      font-size:1.1rem; color:var(--text-subtle);
+      max-width:1600px; text-align:justify; line-height:1.55; margin:.35rem 0 0;
+    }
+
+    .pill-row { margin-top:.65rem; display:flex; flex-wrap:wrap; gap:.5rem; }
+    .pill {
+      font-size:1.05rem; padding:.35rem 1rem; border-radius:999px;
+      background:#edf3ff; color:#2358a5; font-weight:700; font-style:italic;
+      border:none; box-shadow:0 6px 16px rgba(0,0,0,.12);
+    }
+
+    .card {
+      background:var(--card-bg);
+      border-radius:var(--radius-xl);
+      border:1px solid var(--card-border);
+      box-shadow:var(--shadow-soft);
+      padding:1rem 1.15rem 1.25rem;
+      margin-bottom:1.25rem;
+    }
+
+    .card-header {
+      display:flex; justify-content:space-between; align-items:baseline; gap:.5rem; margin-bottom:.5rem;
+    }
+    .label {
+      font-size:.95rem; text-transform:capitalize; letter-spacing:.08em; color:var(--text-subtle);
+    }
+
+    /* Sticky theme bar */
+    .sticky-nav {
+      position:sticky; top:0; z-index:50;
+      background:rgba(244,245,247,.92);
+      backdrop-filter:blur(6px);
+      border:1px solid rgba(224,228,234,.8);
+      border-radius:var(--radius-xl);
+      box-shadow:var(--shadow-soft);
+      padding:.65rem .9rem;
+      margin:.75rem 0 1rem;
+    }
+    .nav-inner { display:flex; flex-wrap:wrap; gap:.6rem .8rem; align-items:center; justify-content:space-between; }
+    .nav-left { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; }
+    .nav-title {
+      font-size:.95rem; color:var(--text-subtle);
+      letter-spacing:.06em; text-transform:uppercase; font-weight:700; margin-right:.25rem;
+    }
+    .nav-btn {
+      border:1px solid #d0d7e2; background:#fff; color:#273b80;
+      padding:.38rem .85rem; border-radius:999px; font-size:.95rem; cursor:pointer;
+      transition:transform .06s ease, box-shadow .12s ease, border-color .12s ease;
+    }
+    .nav-btn:hover { border-color:var(--accent); box-shadow:0 0 0 2px rgba(0,75,155,.12); }
+    .nav-btn:active { transform:translateY(1px); }
+    .nav-btn.primary {
+      border-color:var(--accent);
+      background:var(--accent);
+      color:#ffffff;
+      box-shadow:0 10px 24px rgba(0,75,155,.22);
+    }
+    .nav-btn.primary:hover {
+      border-color:var(--accent);
+      box-shadow:0 0 0 2px rgba(0,75,155,.18), 0 12px 28px rgba(0,75,155,.18);
+    }
+
+    /* Explorer controls */
+    .controls-row { display:flex; flex-wrap:wrap; gap:.75rem; margin-bottom:.75rem; }
+    .control-group { display:flex; flex-direction:column; gap:.25rem; min-width:210px; flex:1 1 210px; }
+    label { font-size:.95rem; color:var(--text-subtle); }
+
+    select, input[type="search"]{
+      border-radius:999px; border:1px solid #d0d7e2; padding:.45rem .9rem;
+      font-size:1.02rem; outline:none; background:#fff;
+    }
+    select:focus, input[type="search"]:focus {
+      border-color:var(--accent); box-shadow:0 0 0 2px rgba(0,75,155,.18);
+    }
+
+    .chips-row { display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:.6rem; }
+    .chip { font-size:.9rem; padding:.25rem .7rem; border-radius:999px; background:#edf2ff; color:#273b80; }
+
+    .table-wrapper {
+      max-height:360px; overflow:auto;
+      border-radius:var(--radius-xl);
+      border:1px solid var(--card-border);
+      background:#fff; box-shadow:var(--shadow-soft);
+    }
+    table { width:100%; border-collapse:collapse; margin-top:0; }
+    th, td {
+      padding:.5rem .45rem; text-align:left; font-size:.96rem;
+      border-bottom:1px solid #e5e7eb; vertical-align:top;
+    }
+    th {
+      position:sticky; top:0; background:#f1f5f9; z-index:2;
+      font-size:.92rem; text-transform:capitalize; letter-spacing:.06em; color:var(--text-subtle);
+    }
+
+    .study-title { font-weight:700; margin-bottom:.1rem; }
+    .study-meta { font-size:.92rem; color:var(--text-subtle); }
+
+    .bullets { margin:.15rem 0; padding-left:1.2rem; font-size:.98rem; color:var(--text-subtle); line-height:1.5; }
+    .bullets li { margin:.18rem 0; }
+
+    /* Summary sections */
+    .grid-2 { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:1.1rem; margin-top:.35rem; }
+    @media (max-width:960px){ .grid-2 { grid-template-columns:minmax(0,1fr); } }
+
+    .mini-card { border-radius:var(--radius-md); background:#f9fafb; border:1px solid #e5e7eb; padding:.75rem .9rem; }
+
+    .note {
+      margin-top:.6rem; padding:.65rem .8rem; border-radius:var(--radius-md);
+      border:1px dashed #cbd5e1; background:#fbfdff; color:var(--text-subtle);
+      font-size:.96rem; line-height:1.5;
+    }
+    .footnote { margin-top:.55rem; font-size:.95rem; color:var(--text-subtle); }
+    .anchor { scroll-margin-top:86px; }
+
+    /* Simple two-column table for Challenges/Opportunities */
+    .simple-table {
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      border:1px solid #e5e7eb;
+      border-radius:var(--radius-xl);
+      overflow:hidden;
+      background:#fff;
+      box-shadow:var(--shadow-soft);
+    }
+    .simple-table th, .simple-table td {
+      padding:.7rem .75rem;
+      border-bottom:1px solid #eef2f7;
+      vertical-align:top;
+      font-size:.98rem;
+    }
+    .simple-table th {
+      background:#f1f5f9;
+      color:var(--text-subtle);
+      font-size:.92rem;
+      letter-spacing:.06em;
+      text-transform:capitalize;
+    }
+    .simple-table tr:last-child td { border-bottom:none; }
+
+    /* Bottom CTA button */
+    .cta-wrap { display:flex; justify-content:center; margin-top:.75rem; }
+    .cta-btn {
+      border:1px solid var(--accent);
+      background:var(--accent);
+      color:#fff;
+      padding:.65rem 1.1rem;
+      border-radius:999px;
+      font-size:1.02rem;
+      font-weight:800;
+      cursor:pointer;
+      box-shadow:0 12px 28px rgba(0,75,155,.22);
+      transition: transform .06s ease, box-shadow .12s ease;
+    }
+    .cta-btn:hover { box-shadow:0 0 0 2px rgba(0,75,155,.18), 0 14px 30px rgba(0,75,155,.20); }
+    .cta-btn:active { transform: translateY(1px); }
+  </style>
+</head>
+
+<body>
+<div class="app-shell">
+  <header>
+    <h1>NCHRP 17-142 — Task 1 Literature Review Dashboard (Prototype)</h1>
+    <p class="subtitle">
+      <b>Prototype (for panel illustration):</b> This dashboard demonstrates the proposed Task 1 evidence-coding structure and
+      table-first synthesis approach. The prototype is intentionally populated with <b>two anchor studies</b> to show how the full
+      Task 1 bibliography will be coded, filtered, and summarized. During the project, the review will be expanded and the
+      summaries will be refined as additional sources are reviewed and coded.
+    </p>
+    <div class="pill-row">
+      <span class="pill" id="pillCount">— Studies in dataset</span>
+    </div>
+  </header>
+
+  <!-- Sticky jump bar -->
+  <div class="sticky-nav">
+    <div class="nav-inner">
+      <div class="nav-left">
+        <span class="nav-title">Jump to</span>
+        <button class="nav-btn primary" data-jump="#tableSection">Evidence table</button>
+        <button class="nav-btn primary" data-jump="#theme1">Theme 1: Decisions</button>
+        <button class="nav-btn primary" data-jump="#theme2">Theme 2: Models</button>
+        <button class="nav-btn primary" data-jump="#theme3">Theme 3: Other tools</button>
+        <button class="nav-btn primary" data-jump="#theme4">Theme 4: Gaps </button>
+        <button class="nav-btn primary" data-jump="#keyFindings">Key findings</button>
+        <button class="nav-btn primary" data-jump="#practitionerTab"> <strong>Challenges → Opportunities </strong> </button>
+      </div>
+      <div class="nav-right">
+        <span class="label" id="resultLabel">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Evidence Table -->
+  <section class="card anchor" id="tableSection">
+    <div class="card-header">
+      <h2>Evidence Table (Interactive Explorer)</h2>
+      <span class="label">Two anchor studies (illustrative)</span>
+    </div>
+
+    <div class="controls-row">
+      <div class="control-group">
+        <label for="facilityFilter"> Facility type</label>
+        <select id="facilityFilter">
+          <option value="all">All facility types</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="comparisonFilter">Alternative evaluated</label>
+        <select id="comparisonFilter">
+          <option value="all">All alternatives</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="modelFilter">Model / evidence approach</label>
+        <select id="modelFilter">
+          <option value="all">All approaches</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="outcomeFilter">Safety metric evaluated</label>
+        <select id="outcomeFilter">
+          <option value="all">All metrics</option>
+        </select>
+      </div>
+      <div class="control-group" style="min-width: 280px; flex: 1.4 1 280px;">
+        <label for="searchBox">Search (author, topic, key bullet)</label>
+        <input id="searchBox" type="search" placeholder="e.g., FI, AADT, calibration, CMF variability" />
+      </div>
+    </div>
+
+    <div class="chips-row" id="activeSummary"></div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th style="min-width:260px;">Study</th>
+            <th style="min-width:230px;">HSM facility type</th>
+            <th style="min-width:260px;">Alternative evaluated</th>
+            <th style="min-width:220px;">Model / evidence approach</th>
+            <th style="min-width:220px;">Safety metric evaluated</th>
+            <th style="min-width:420px;">Key findings / interpretation signals</th>
+          </tr>
+        </thead>
+        <tbody id="studyTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <b>How to read this prototype:</b> The table demonstrates how Task 1 will code each source into a consistent structure
+      (facility type, alternatives, evidence approach, safety metrics, and interpretation signals). The full project dataset will
+      expand beyond these two anchor sources.
+    </div>
+  </section>
+
+  <!-- Theme 1 -->
+  <section class="card anchor" id="theme1">
+    <div class="card-header">
+      <h2>Theme 1 — What decisions are commonly evaluated in practice</h2>
+      <span class="label">Counts from prototype dataset</span>
+    </div>
+    <div class="grid-2">
+      <div class="mini-card">
+        <h3>Decision contexts (frequency)</h3>
+        <ul class="bullets" id="t1Patterns"></ul>
+      </div>
+      <div class="mini-card">
+        <h3>Key synthesis bullets</h3>
+        <ul class="bullets" id="t1Bullets">
+          <li>In the current prototype dataset, the dominant decision context is <b>stop-controlled vs. signalized</b> intersection control selection.</li>
+          <li>As additional Task 1 sources are added, this dashboard will quantify how frequently other decision contexts occur (e.g., roundabout conversions, ramp terminals, facility conversions).</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footnote">Prototype note: counts reflect the two anchor sources only.</div>
+  </section>
+
+  <!-- Theme 2 -->
+  <section class="card anchor" id="theme2">
+    <div class="card-header">
+      <h2>Theme 2 — What models are used to make those decisions</h2>
+      <span class="label">Counts from prototype dataset</span>
+    </div>
+    <div class="grid-2">
+      <div class="mini-card">
+        <h3>Model / evidence approaches (frequency)</h3>
+        <ul class="bullets" id="t2Patterns"></ul>
+      </div>
+      <div class="mini-card">
+        <h3>Key synthesis bullets</h3>
+        <ul class="bullets" id="t2Bullets">
+          <li>HSM-based crash prediction models are frequently used to compare alternatives in intersection control decisions.</li>
+          <li>Observed crash experience and CMF synthesis are also used to inform expected safety change in stop-to-signal conversions.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footnote">Prototype note: local SPFs and other tools are set to zero in this prototype dataset.</div>
+  </section>
+
+  <!-- Theme 3 -->
+  <section class="card anchor" id="theme3">
+    <div class="card-header">
+      <h2>Theme 3 — What other tools are used if models aren’t enough</h2>
+      <span class="label">Counts from prototype dataset</span>
+    </div>
+    <div class="grid-2">
+      <div class="mini-card">
+        <h3>Supplemental tools (frequency)</h3>
+        <ul class="bullets" id="t3Patterns"></ul>
+      </div>
+      <div class="mini-card">
+        <h3>Key synthesis bullets</h3>
+        <ul class="bullets" id="t3Bullets">
+          <li>In the two-source prototype dataset, <b>no additional practitioner tools</b> (e.g., ICE/SPICE dashboards, local SPF toolkits) are coded yet.</li>
+          <li>As Task 1 coding expands, this section will capture when supplemental tools are used to structure alternatives comparison, document assumptions, and support interpretation.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footnote">Prototype note: counts reflect the two anchor sources only.</div>
+  </section>
+
+  <!-- Theme 4 -->
+  <section class="card anchor" id="theme4">
+    <div class="card-header">
+      <h2>Theme 4 — What gaps, challenges, or inconsistencies are reported</h2>
+      <span class="label">Counts from prototype dataset</span>
+    </div>
+    <div class="grid-2">
+      <div class="mini-card">
+        <h3>Common challenge patterns (frequency)</h3>
+        <ul class="bullets" id="t4Patterns"></ul>
+      </div>
+      <div class="mini-card">
+        <h3>Key synthesis bullets</h3>
+        <ul class="bullets" id="t4Bullets">
+          <li>Comparative conclusions can vary by <b>major/minor AADT combinations</b>, especially near crossover ranges.</li>
+          <li>Comparative rankings can differ by <b>safety metric</b> (e.g., total vs FI), creating interpretation challenges.</li>
+          <li>CMFs used for stop-to-signal conversions can exhibit <b>high variance and mixed direction</b>, increasing uncertainty in expected safety change.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footnote">Prototype note: counts reflect the two anchor sources only.</div>
+  </section>
+
+  <!-- Key Findings -->
+  <section class="card anchor" id="keyFindings">
+    <div class="card-header">
+      <h2>Key Findings (Brief)</h2>
+      <span class="label">Prototype synthesis (concise)</span>
+    </div>
+    <div class="grid-2">
+      <div class="mini-card">
+        <h3>Brief findings</h3>
+        <ul class="bullets" id="kfFindings"></ul>
+
+        <!-- bottom blue highlighted button -->
+
+      </div>
+
+      <div class="mini-card">
+        <h3>Why this matters for NCHRP 17-142</h3>
+        <ul class="bullets">
+          <li>The literature signals where comparative outcomes can be sensitive (metric-dependent, volume-dependent, and assumption-dependent).</li>
+          <li>These signals motivate structured diagnostics and interpretation pathways that agencies can apply consistently.</li>
+          <li>The full Task 1 dataset will expand these patterns and quantify how often they appear across sources.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>Prototype intent:</b> This concise synthesis illustrates how the dashboard will translate coded literature signals into actionable
+      practitioner-facing implications. The final Task 1 synthesis will expand and refine these points as additional sources are added.
+    </div>
+  </section>
+
+  <!-- Practitioner tab (separate section) -->
+  <section class="card anchor" id="practitionerTab">
+    <div class="card-header">
+      <h2>Challenges → Opportunities</h2>
+      <span class="label">Panel-friendly “so what?”</span>
+    </div>
+
+    <table class="simple-table">
+      <thead>
+        <tr>
+          <th style="width:50%;">Challenges for practitioners</th>
+          <th style="width:50%;">Opportunities and potential solutions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>Metric-dependent conclusions.</b> Comparative rankings can differ when using total crashes versus FI crashes.</td>
+          <td><b>Structured reporting.</b> Provide clear guidance and examples that show how interpretation changes by metric, and how to document tradeoffs.</td>
+        </tr>
+        <tr>
+          <td><b>AADT combination sensitivity.</b> Comparative conclusions can change across major/minor volume combinations, particularly near crossover ranges.</td>
+          <td><b>Diagnostic “sensitivity zones.”</b> Provide simple rules and visual checks to flag when results are likely to be sensitive and require extra care.</td>
+        </tr>
+        <tr>
+          <td><b>Uncertain safety change from CMFs.</b> CMFs for stop-to-signal conversion can be high-variance and mixed-direction, making expected safety change unclear.</td>
+          <td><b>Interpretation checklist.</b> Provide a consistent checklist for assumptions, applicability, and documentation—so decisions do not rely on CMFs alone.</td>
+        </tr>
+        <tr>
+          <td><b>Application choices affect interpretation.</b> Results can shift with calibration assumptions and treatment/CMF choices.</td>
+          <td><b>Memo-ready documentation.</b> Provide transparent documentation templates that record assumptions and justify why a given pathway was selected.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <b>How this will evolve:</b> As Task 1 expands, this table will be refined using patterns across sources and will link to the
+      project’s later deliverables (diagnostic checks, decision pathways, and memo-ready documentation).
+    </div>
+  </section>
+
+</div>
+
+<script>
+  const studies = [
+    {
+      citation: "Dadvar et al. (2024)",
+      year: 2024,
+      hsmFacilityType: "Multiple HSM facilities (R2L, RML, Urban/Sub urban arterials)",
+      alternative: "Stop-controlled vs. Signalized (minor-road stop vs SG)",
+      modelEvidence: "Default HSM Part C CPMs (with sensitivity checks)",
+      safetyMetric: "Total crashes; Fatal-and-Injury (FI) crashes",
+      keyBullets: [
+        "Rankings can vary by safety metric (total vs FI) and by major/minor AADT combinations.",
+        "Comparative outcomes can shift across facility types and with application elements (e.g., CMFs/treatments, calibration choices, local model comparisons)."
+      ],
+      link: "https://doi.org/10.1177/03611981241252155"
+    },
+    {
+      citation: "Bonneson et al. (2014)",
+      year: 2014,
+      hsmFacilityType: "General Context",
+      alternative: "Stop-controlled → Signalized (conversion decision)",
+      modelEvidence: "Observed crash experience + CMFs (signal warrant context)",
+      safetyMetric: "Total crashes; crash-type-specific outcomes",
+      keyBullets: [
+        "CMFs for stop-to-signal conversion show high variance and mixed direction (some > 1.0), creating uncertainty in expected safety change.",
+        "Implication: decisions require structured checks and interpretation rather than relying on CMFs alone."
+      ],
+  link: "https://trid.trb.org/View/1324632"
+    }
+  ];
+
+  function escapeHtml(str) {
+    return (str ?? "").toString()
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+  function uniqueValues(list, selector) {
+    const s = new Set(list.map(selector).filter(v => v && v !== "all"));
+    return Array.from(s).sort();
+  }
+
+  const facilityFilter = document.getElementById("facilityFilter");
+  const comparisonFilter = document.getElementById("comparisonFilter");
+  const modelFilter = document.getElementById("modelFilter");
+  const outcomeFilter = document.getElementById("outcomeFilter");
+  const searchBox = document.getElementById("searchBox");
+  const tableBody = document.getElementById("studyTableBody");
+  const activeSummary = document.getElementById("activeSummary");
+  const pillCount = document.getElementById("pillCount");
+  const resultLabel = document.getElementById("resultLabel");
+
+  const t1Patterns = document.getElementById("t1Patterns");
+  const t2Patterns = document.getElementById("t2Patterns");
+  const t3Patterns = document.getElementById("t3Patterns");
+  const t4Patterns = document.getElementById("t4Patterns");
+  const kfFindings = document.getElementById("kfFindings");
+
+  function initFilters() {
+    uniqueValues(studies, s => s.hsmFacilityType).forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = v; opt.textContent = v;
+      facilityFilter.appendChild(opt);
+    });
+    uniqueValues(studies, s => s.alternative).forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = v; opt.textContent = v;
+      comparisonFilter.appendChild(opt);
+    });
+    uniqueValues(studies, s => s.modelEvidence).forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = v; opt.textContent = v;
+      modelFilter.appendChild(opt);
+    });
+    uniqueValues(studies, s => s.safetyMetric).forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = v; opt.textContent = v;
+      outcomeFilter.appendChild(opt);
+    });
+  }
+
+  function renderChips(count) {
+    activeSummary.innerHTML = "";
+    const chips = [`Showing ${count} of ${studies.length} studies`];
+    if (facilityFilter.value !== "all") chips.push(`Facility: ${facilityFilter.value}`);
+    if (comparisonFilter.value !== "all") chips.push(`Alternative: ${comparisonFilter.value}`);
+    if (modelFilter.value !== "all") chips.push(`Model/evidence: ${modelFilter.value}`);
+    if (outcomeFilter.value !== "all") chips.push(`Metric: ${outcomeFilter.value}`);
+    if (searchBox.value.trim()) chips.push(`Search: "${searchBox.value.trim()}"`);
+    chips.forEach(t => {
+      const span = document.createElement("span");
+      span.className = "chip";
+      span.textContent = t;
+      activeSummary.appendChild(span);
+    });
+  }
+
+  function renderTable(list) {
+    tableBody.innerHTML = "";
+    list.forEach(s => {
+const linkHtml = `
+  <div class="study-title">${escapeHtml(s.citation)}</div>
+  ${s.link
+    ? `<div class="study-meta">
+         <a href="${escapeHtml(s.link)}" target="_blank" rel="noopener">
+           View article (DOI)
+         </a>
+       </div>`
+    : ""
+  }
+`;
+
+
+      const bullets = (s.keyBullets || []).slice(0, 3);
+      const bulletHtml = bullets.length
+        ? `<ul class="bullets">${bullets.map(b => `<li>${escapeHtml(b)}</li>`).join("")}</ul>`
+        : `<span class="study-meta">—</span>`;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>
+          <div class="study-title">${linkHtml}</div>
+          <div class="study-meta">${escapeHtml(s.year)}</div>
+        </td>
+        <td>${escapeHtml(s.hsmFacilityType)}</td>
+        <td><b>${escapeHtml(s.alternative)}</b></td>
+        <td>${escapeHtml(s.modelEvidence)}</td>
+        <td>${escapeHtml(s.safetyMetric)}</td>
+        <td>${bulletHtml}</td>
+      `;
+      tableBody.appendChild(tr);
+    });
+  }
+
+  let lastFiltered = studies.slice();
+
+  function applyFilters() {
+    const f = facilityFilter.value;
+    const a = comparisonFilter.value;
+    const m = modelFilter.value;
+    const o = outcomeFilter.value;
+    const q = searchBox.value.trim().toLowerCase();
+
+    let filtered = studies.slice();
+    if (f !== "all") filtered = filtered.filter(s => s.hsmFacilityType === f);
+    if (a !== "all") filtered = filtered.filter(s => s.alternative === a);
+    if (m !== "all") filtered = filtered.filter(s => s.modelEvidence === m);
+    if (o !== "all") filtered = filtered.filter(s => s.safetyMetric === o);
+
+    if (q) {
+      filtered = filtered.filter(s => {
+        const hay = (
+          s.citation + " " + s.hsmFacilityType + " " + s.alternative + " " +
+          s.modelEvidence + " " + s.safetyMetric + " " +
+          (s.keyBullets || []).join(" ")
+        ).toLowerCase();
+        return hay.includes(q);
+      });
+    }
+
+    lastFiltered = filtered;
+    renderChips(filtered.length);
+    renderTable(filtered);
+    resultLabel.textContent = `${filtered.length} match current filters`;
+    renderSummaries();
+  }
+
+  function renderCountsList(el, rows) {
+    el.innerHTML = "";
+    rows.forEach(({label, count}) => {
+      const li = document.createElement("li");
+      li.innerHTML = `<b>${escapeHtml(label)}</b>: ${count}`;
+      el.appendChild(li);
+    });
+  }
+
+  function renderSummaries() {
+    const decisions = [
+      { label: "Stop-controlled vs. signalized", count: studies.filter(s => s.alternative.toLowerCase().includes("signal")).length },
+      { label: "Roundabout conversion", count: 0 },
+      { label: "Facility conversion (segment type)", count: 0 }
+    ];
+    renderCountsList(t1Patterns, decisions);
+
+    const models = [
+      { label: "Default HSM CPMs", count: studies.filter(s => s.modelEvidence.toLowerCase().includes("hsm")).length },
+      { label: "Observed crash experience + CMFs", count: studies.filter(s => s.modelEvidence.toLowerCase().includes("cmf")).length }
+    ];
+    renderCountsList(t2Patterns, models);
+
+    const otherTools = [
+      { label: "Local SPFs", count: 0 },
+      { label: "ICE/SPICE tools", count: 0 },
+      { label: "Practitioner toolkits", count: 0 }
+    ];
+    renderCountsList(t3Patterns, otherTools);
+
+    const issues = [
+      { label: "AADT combination sensitivity", count: 1 },
+      { label: "Severity-based ranking flips (Total vs FI)", count: 1 },
+      { label: "High-variance / mixed-direction CMFs", count: 1 }
+    ];
+    renderCountsList(t4Patterns, issues);
+
+    const k = [
+      "Comparative rankings can differ by safety metric (Total vs FI), requiring explicit documentation of which metric drives the decision.",
+      "Comparative conclusions can be sensitive to major/minor AADT combinations and can shift across facility types.",
+      "CMFs for stop-to-signal conversions can vary widely and may be mixed-direction, so CMFs alone may not provide a clear expected safety change."
+    ];
+    kfFindings.innerHTML = k.map(x => `<li>${escapeHtml(x)}</li>`).join("");
+  }
+
+  // Jump buttons (top + bottom CTA)
+  document.querySelectorAll("[data-jump]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target = btn.getAttribute("data-jump");
+      const el = document.querySelector(target);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+
+  [facilityFilter, comparisonFilter, modelFilter, outcomeFilter].forEach(sel =>
+    sel.addEventListener("change", applyFilters)
+  );
+  searchBox.addEventListener("input", () => {
+    clearTimeout(searchBox._timer);
+    searchBox._timer = setTimeout(applyFilters, 160);
+  });
+
+  function init() {
+    pillCount.textContent = `${studies.length} Studies in dataset (prototype)`;
+    initFilters();
+    applyFilters();
+  }
+  init();
+</script>
+</body>
+</html>
